@@ -4,8 +4,8 @@ TODO はすべて GitHub Issue に置く。TASKS.md・プラン・会話・Notio
 
 ## 必須ルール
 
-1. **コードに触る作業は必ず Issue 番号を持つ。** 無ければ作業前に `/issue` で起票する。
-2. **1 Issue = 1 ブランチ = 1 worktree = 1 PR。** main（master）・develop へ直接 commit しない（Claude Code のフック `~/.claude/hooks/require-issue-branch.py` が止める）。
+1. **コードに触る作業は必ず Issue 番号を持つ。** 無ければ作業前に `gh issue create` で起票する。
+2. **1 Issue = 1 ブランチ = 1 worktree = 1 PR。** main（master）・develop へ直接 commit しない。
    - ブランチ名: `<type>/<N>-<slug>`（例: `feat/42-invoice-csv`）。Orca が付ける `<ユーザー名>/` 接頭辞は可。
    - type: `feat` / `fix` / `chore` / `docs` / `refactor` / `test` / `perf` / `epic`
    - **作業ブランチは `develop` から切り、PR は `develop` に向ける**（2026-09-24〜）。既定ブランチを `develop` にしておく
@@ -13,8 +13,7 @@ TODO はすべて GitHub Issue に置く。TASKS.md・プラン・会話・Notio
    - **`main`（`master`）は本番。常にきれいに保つ。** 入るのは `develop` → `main` のリリース PR だけで、そのマージは本人だけ。CI で「main への PR は develop からだけ」を強制し、ブランチ保護で直接 push を禁止する
    - PR には **Playwright の E2E を本番と同じ実行環境に対して流した結果**と「**確認できていないこと**」を書く。後者が空でない PR はマージしない（詳細は `~/.claude/CLAUDE.md`「テストと検証」）
 4. **コード以外の TODO も Issue。** 顧客確認・判断待ち（要件定義書の【要確認】など）は `needs-human` を付けて起票する。
-5. **Issue は必ず Dev Board に載せる。期限がある Issue（タイトルや本文に日付がある、`p1` など）は `Due` を必ず入れる。**
-   **状態は Dev Board（GitHub Projects）の Status 列だけで管理する**（Todo / In Progress / In Review / Done）。状態ラベルは作らない。期限は `Due`、誰が球を持っているかは `Ball`（自分 / 先方）に入れる（`~/bin/board-set`）。
+5. **状態は Issue と PR で見る。** 状態ラベルは作らない。期限は Issue の本文かタイトルに日付で書く。
 6. **並列で走らせる Issue は同じファイルを触らない。** 共有型・DB スキーマの変更は先に単独の Issue で済ませ、他は blocked-by でつなぐ。同時起動は 3 件まで。
 7. **作業中に見つけた範囲外の作業は、その場で直さず別 Issue にする。**
 
@@ -39,11 +38,10 @@ TODO はすべて GitHub Issue に置く。TASKS.md・プラン・会話・Notio
 ## 流れ
 
 ```
-/issue（起票・Dev Board: Todo）
-  → /start <N>（Orca worktree + エージェント起動・In Progress）
-  → /kickoff（Issue ゲート → Gate 1）→ /implement
-  → /wrapup（Gate 2: commit + push + PR → develop・In Review）
-  → CI（型検査・単体・Playwright E2E）が緑 → squash マージで develop へ（Issue 自動 close・Done）
+gh issue create（起票）
+  → Orca の worktree を作って実装する
+  → commit + push + PR（develop 向け）
+  → CI（型検査・単体・Playwright E2E）が緑 → squash マージで develop へ（Issue 自動 close）
   → develop をデモ／ステージングへデプロイ（版の一致と E2E まで確認）
   → develop → main のリリース PR（CI が緑）→ 本人がマージ → 本番へ
 ```
@@ -55,14 +53,14 @@ TASKS.md は引き継ぎメモ専用（作業中の Issue 番号・詰まり・�
 | 旧 | 新 |
 |---|---|
 | 中ノート（案件 1 件） | 親 Issue（`type:epic`）。本文に「一文 / 終わりの条件 / やらないこと / 地雷」 |
-| 節4 未決 | `needs-human` の Issue（Ball=先方） |
-| 節5 次の一手 | 子 Issue（期限は Dev Board の Due） |
+| 節4 未決 | `needs-human` の Issue |
+| 節5 次の一手 | 子 Issue（期限は Issue に日付で書く） |
 
 リポジトリを持たない案件の Issue は `Ouverse-Inc/ouverse-hub`（ラベル `client:<slug>`）に置く。
 
 ## Notion への反映（GitHub → Notion の一方向）
 
 - 対応表は `~/Projects/オウバース/_index/案件マップ.md`
-- エージェントが書くのは Notion 案件DB の「次回アクション内容」「次回アクション日」「メモの `【GitHub同期】` 行」だけ（`/start`・`/wrapup` が自動、全体は `/notion-sync`）
+- エージェントが書くのは Notion 案件DB の「次回アクション内容」「次回アクション日」「メモの `【GitHub同期】` 行」だけ（自動の反映は今は無い）
 - 案件ステータス・金額・按分・計上日は人間だけが変える
 - Notion 側で書かれたことは Issue に写してから上書きする
